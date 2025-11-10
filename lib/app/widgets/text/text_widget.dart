@@ -9,6 +9,7 @@ class TextWidget extends StatelessWidget {
   final TextAlign? textAlign;
   final TextOverflow? overflow;
   final int? maxLines;
+  final Gradient? gradient;
 
   const TextWidget(
     this.text, {
@@ -19,20 +20,45 @@ class TextWidget extends StatelessWidget {
     this.textAlign,
     this.overflow,
     this.maxLines,
+    this.gradient,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: GoogleFonts.inter(
-        fontSize: fontSize ?? 14,
-        fontWeight: fontWeight ?? FontWeight.w500,
-        color: color,
+    final textStyle = GoogleFonts.inter(
+      fontSize: fontSize ?? 14,
+      fontWeight: fontWeight ?? FontWeight.w500,
+      color: color,
+    );
+
+    // ✅ jika tidak ada gradient, tampilkan Text biasa
+    if (gradient == null) {
+      return Text(
+        text,
+        style: textStyle,
+        textAlign: textAlign,
+        overflow: overflow,
+        maxLines: maxLines,
+      );
+    }
+
+    // ✅ jika ada gradient, pakai ShaderMask
+    return ShaderMask(
+      blendMode: BlendMode.srcIn,
+      shaderCallback: (bounds) {
+        return gradient!.createShader(
+          Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+        );
+      },
+      child: Text(
+        text,
+        style: textStyle.copyWith(
+          color: Colors.white,
+        ), // warna diabaikan, pakai shader
+        textAlign: textAlign,
+        overflow: overflow,
+        maxLines: maxLines,
       ),
-      textAlign: textAlign,
-      overflow: overflow,
-      maxLines: maxLines,
     );
   }
 }

@@ -60,6 +60,7 @@ class MainLayout extends StatelessWidget {
                 child: SafeArea(top: true, bottom: false, child: appBar!),
               ),
         drawer: drawer,
+        resizeToAvoidBottomInset: true,
         body: SafeArea(
           top: appBar == null, // only add top padding if no AppBar
           bottom: true,
