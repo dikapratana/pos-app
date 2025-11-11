@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:reactive_forms/reactive_forms.dart';
+import '../../text/text_widget.dart';
 
-import '../../../text/text_widget.dart';
-
-class TextfieldWidget extends StatefulWidget {
-  final TextEditingController? controller;
-  final String? initialValue;
+class ReactiveTextfieldWidget extends StatefulWidget {
+  final String formControlName;
   final String? label;
   final String? hint;
   final bool isPassword;
@@ -20,16 +19,14 @@ class TextfieldWidget extends StatefulWidget {
   final TextStyle? labelStyle;
   final TextInputType keyboardType;
   final TextInputAction? textInputAction;
-  final ValueChanged<String>? onChanged;
-  final FormFieldValidator<String>? validator;
   final int maxLines;
   final Widget? prefixIcon;
   final Widget? suffixIcon;
+  final Map<String, String Function(Object)>? validationMessages;
 
-  const TextfieldWidget({
+  const ReactiveTextfieldWidget({
     super.key,
-    this.controller,
-    this.initialValue,
+    required this.formControlName,
     this.label,
     this.hint,
     this.isPassword = false,
@@ -45,41 +42,37 @@ class TextfieldWidget extends StatefulWidget {
     this.labelStyle,
     this.keyboardType = TextInputType.text,
     this.textInputAction,
-    this.onChanged,
-    this.validator,
     this.maxLines = 1,
     this.prefixIcon,
     this.suffixIcon,
+    this.validationMessages,
   });
 
   @override
-  State<TextfieldWidget> createState() => _TextfieldWidgetState();
+  State<ReactiveTextfieldWidget> createState() =>
+      _ReactiveTextfieldWidgetState();
 }
 
-class _TextfieldWidgetState extends State<TextfieldWidget> {
-  late final TextEditingController _controller;
-  late bool _obscure;
+class _ReactiveTextfieldWidgetState extends State<ReactiveTextfieldWidget> {
+  bool _obscure = false;
 
   @override
   void initState() {
     super.initState();
     _obscure = widget.isPassword;
-    _controller =
-        widget.controller ??
-        TextEditingController(text: widget.initialValue ?? '');
   }
 
-  void _clear() {
-    _controller.clear();
-    widget.onChanged?.call('');
-    setState(() {});
-  }
-
+  @override
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final borderColor = widget.borderColor ?? Colors.grey.shade400;
     final focusedColor = widget.focusedBorderColor ?? theme.colorScheme.primary;
+
+    final form = ReactiveForm.of(context);
+    final control = (form is FormGroup)
+        ? form.control(widget.formControlName)
+        : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,20 +81,15 @@ class _TextfieldWidgetState extends State<TextfieldWidget> {
           TextWidget(widget.label!, fontWeight: FontWeight.w500, fontSize: 14),
           const SizedBox(height: 6),
         ],
-        TextFormField(
-          controller: _controller,
+        ReactiveTextField<String>(
+          formControlName: widget.formControlName,
           obscureText: _obscure,
           readOnly: widget.readOnly,
-          enabled: widget.enabled,
           style: widget.textStyle ?? const TextStyle(fontSize: 14),
           keyboardType: widget.keyboardType,
           textInputAction: widget.textInputAction,
           maxLines: widget.maxLines,
-          validator: widget.validator,
-          onChanged: (value) {
-            widget.onChanged?.call(value);
-            if (widget.showClearButton) setState(() {});
-          },
+          validationMessages: widget.validationMessages,
           decoration: InputDecoration(
             isDense: true,
             hintText: widget.hint,
@@ -110,8 +98,14 @@ class _TextfieldWidgetState extends State<TextfieldWidget> {
                 TextStyle(color: Colors.grey.shade500, fontSize: 12),
             filled: widget.filled,
             fillColor: widget.fillColor ?? Colors.white,
-            suffixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0.0),
-            prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0.0),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 0,
+              minHeight: 0.0,
+            ),
+            suffixIconConstraints: const BoxConstraints(
+              minWidth: 0,
+              minHeight: 0.0,
+            ),
             prefixIcon: Padding(
               padding: const EdgeInsets.only(left: 14, right: 4),
               child: widget.prefixIcon,
@@ -133,13 +127,15 @@ class _TextfieldWidgetState extends State<TextfieldWidget> {
                       onTap: () => setState(() => _obscure = !_obscure),
                     ),
                   ),
-                if (widget.showClearButton && _controller.text.isNotEmpty)
+                if (widget.showClearButton &&
+                    (control?.value?.toString().isNotEmpty ?? false))
                   IconButton(
                     icon: Icon(
                       Icons.clear_rounded,
                       color: Colors.grey.shade600,
+                      size: 20,
                     ),
-                    onPressed: _clear,
+                    onPressed: () => control?.reset(value: ''),
                   ),
                 if (widget.suffixIcon != null) widget.suffixIcon!,
               ],

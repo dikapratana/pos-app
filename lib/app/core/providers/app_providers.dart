@@ -1,7 +1,9 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pos_resto_app/app/core/providers/auth/auth_provider.dart';
-import 'package:pos_resto_app/app/features/auth/login/bloc/login/login_bloc_bloc.dart';
+import 'package:provider/single_child_widget.dart';
+import 'auth/auth_provider.dart';
 
 class AppProviders {
-  static List<BlocProvider> list = [...AuthProvider.list];
+  static List<SingleChildWidget> list = [
+    ...AuthProvider.list,
+    // kalau ada provider lain, tambahkan di sini
+  ];
 }
