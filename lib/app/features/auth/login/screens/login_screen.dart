@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pos_resto_app/app/core/theme/app_colors.dart';
+import 'package:pos_resto_app/app/features/auth/login/model/login_request_model.dart';
 import 'package:pos_resto_app/app/widgets/text/text_widget.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
@@ -20,10 +21,10 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final form = FormGroup({
     'username': FormControl<String>(
-      validators: [Validators.required, Validators.minLength(3)],
+      validators: [Validators.required, Validators.email],
     ),
     'password': FormControl<String>(
-      validators: [Validators.required, Validators.minLength(6)],
+      validators: [Validators.required, Validators.minLength(8)],
     ),
   });
 
@@ -53,15 +54,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   state.whenOrNull(
                     success: (response) {
                       // ✅ Navigasi atau simpan token di sini
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Login berhasil!')),
-                      );
+                      // ScaffoldMessenger.of(context).showSnackBar(
+                      //   const SnackBar(content: Text('Login berhasil!')),
+                      // );
                       // context.go('/home'); // contoh redirect
                     },
                     error: (error) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(error.message ?? 'Login gagal')),
-                      );
+                      // ScaffoldMessenger.of(context).showSnackBar(
+                      //   SnackBar(content: Text(error.message ?? 'Login gagal')),
+                      // );
                     },
                   );
                 },
@@ -105,6 +106,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           label: 'Username',
                           hint: 'Masukkan username kamu',
                           prefixIcon: const Icon(Icons.person_outline),
+                          textInputAction: TextInputAction.next,
+                          keyboardType: TextInputType.emailAddress,
                           validationMessages: {
                             ValidationMessage.required: (_) =>
                                 'Username wajib diisi',
@@ -119,6 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           hint: 'Masukkan password kamu',
                           isPassword: true,
                           prefixIcon: const Icon(Icons.lock_outline),
+
                           validationMessages: {
                             ValidationMessage.required: (_) =>
                                 'Password wajib diisi',
@@ -128,10 +132,28 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
 
                         const SizedBox(height: 32),
-                        ButtonWidget(
-                          label: isLoading ? null : 'Masuk',
-                          isLoading: isLoading,
-                          onPressed: () {},
+                        ReactiveFormConsumer(
+                          builder: (context, form, child) {
+                            final isFormValid = form.valid;
+
+                            return ButtonWidget(
+                              label: isLoading ? null : 'Masuk',
+                              isLoading: isLoading,
+                              isDisabled: !isFormValid,
+                              onPressed: () {
+                                final username = form.control('username').value;
+                                final password = form.control('password').value;
+                                context.read<LoginBloc>().add(
+                                  LoginEvent.submit(
+                                    LoginRequestModel(
+                                      username: username,
+                                      password: password,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
                         ),
                       ],
                     ),

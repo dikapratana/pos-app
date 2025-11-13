@@ -5,7 +5,10 @@ import 'package:pos_resto_app/app/core/providers/app_providers.dart';
 import 'package:pos_resto_app/app/core/routers/app_router.dart';
 import 'package:pos_resto_app/app/core/theme/app_colors.dart';
 
+import 'app/core/configs/services/locator.dart';
+
 void main() {
+  setupLocator();
   runApp(const MyApp());
 }
 

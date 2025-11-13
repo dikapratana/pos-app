@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 
 class AppInterceptor extends Interceptor {
@@ -7,44 +8,29 @@ class AppInterceptor extends Interceptor {
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    // Tambahkan token otomatis
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
     }
 
-    // Log request
-    print('[DIO] → ${options.method} ${options.uri}');
-    if (options.data != null) print('Body: ${options.data}');
-
-    super.onRequest(options, handler);
+    handler.next(options);
   }
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    // Log response
-    print('[DIO] ← [${response.statusCode}] ${response.requestOptions.uri}');
-    super.onResponse(response, handler);
+    // Parse JSON jika dikirim dalam bentuk string
+    if (response.data is String &&
+        response.headers.value('content-type')?.contains('application/json') ==
+            true) {
+      try {
+        response.data = json.decode(response.data);
+      } catch (_) {}
+    }
+
+    handler.next(response);
   }
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    String message = 'Terjadi kesalahan koneksi';
-    if (err.type == DioExceptionType.connectionTimeout) {
-      message = 'Koneksi timeout';
-    } else if (err.type == DioExceptionType.receiveTimeout) {
-      message = 'Server tidak merespon';
-    } else if (err.type == DioExceptionType.badResponse) {
-      message = err.response?.data['message'] ?? 'Terjadi kesalahan server';
-    }
-
-    print('[DIO] ❌ ${err.message}');
-    handler.next(
-      DioException(
-        requestOptions: err.requestOptions,
-        response: err.response,
-        message: message,
-        type: err.type,
-      ),
-    );
+    handler.next(err); // biarkan error diteruskan ke _handleError
   }
 }
